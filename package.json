@@ -1,0 +1,20 @@
+{
+  "name": "derpcord",
+  "version": "1.0.0",
+  "description": "",
+  "main": "discord_bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^12.5.3",
+    "steam-totp": "^2.1.1",
+    "steam-user": "^4.19.7",
+    "tf2-item-format": "4.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^7.26.0"
+  }
+}
