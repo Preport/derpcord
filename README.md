@@ -45,6 +45,7 @@ This project was heavily inspired by [tf2autocord](https://github.com/Gobot1234/
 - Alright. You've got the easy stuff out of the way now. Now you get to the lil' bit more complicated stuff.
   - Open the `discord_bot.js` file in a text editor. We will need to add some stuff here as well. 
     - You will see a variable called `commands_channel_id`. This is the variable that controls where you can send commands to your bot, and where you can see responses from the bot. Create a text channel in your Discord Server, and then right click on the channel's name. Click on 'Copy ID' as shown in the picture, and then paste that value in quotes here.
+
     ![image](https://user-images.githubusercontent.com/31774135/120828531-4210a080-c57a-11eb-9663-9ff3051c63ba.png)
     
     - Next, you will need to enter your own ID. You will see a variable called `bot_owner_id`. This will let the bot know that you are the owner, and only you can access the commands that will be sent to the Trade Bot, and no one else. Other people can use the `help`, `serverinfo`, `userinfo` and `get` commands, but the `send` command will only apply to you. To get your role ID, Go to your Server Settings -> Roles -> Right click on the role you have, and click on 'Copy ID', paste that in this variable. Refer to the image below:
