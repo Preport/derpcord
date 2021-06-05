@@ -57,11 +57,6 @@ async function logInEvents() {
     console.log('Steam Bot is now online and game has been set to TF2!');
     steam_login_flag = true;
 
-    schemaManager.init(function(err) {
-        if (err) {
-            throw err;
-        }
-    });
     let channel_name = discord_client.channels.cache.get(commands_channel_id);
     let embed = new Discord.MessageEmbed()
     .setTitle("Steam Login")
