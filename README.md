@@ -47,8 +47,9 @@ This project was heavily inspired by [tf2autocord](https://github.com/Gobot1234/
     - You will see a variable called `commands_channel_id`. This is the variable that controls where you can send commands to your bot, and where you can see responses from the bot. Create a text channel in your Discord Server, and then right click on the channel's name. Click on 'Copy ID' as shown in the picture, and then paste that value in quotes here.
     ![image](https://user-images.githubusercontent.com/31774135/120828531-4210a080-c57a-11eb-9663-9ff3051c63ba.png)
     
-    - Next, you will need to enter your own ID. You will see a variable called `bot_owner_id`. This will let the bot know that you are the owner, and only you can access the commands that will be sent to the Trade Bot, and no one else. Other people can use the `help`, `serverinfo`, `userinfo` and `get` commands, but the `send` command will only apply to you. To get your ID, right click on your name and click on 'Copy ID' as shown in the image below. Then, paste that value in quotes to this variable.
-    ![image](https://user-images.githubusercontent.com/31774135/120828838-9f0c5680-c57a-11eb-823a-cb67b5a2f4c7.png)
+    - Next, you will need to enter your own ID. You will see a variable called `bot_owner_id`. This will let the bot know that you are the owner, and only you can access the commands that will be sent to the Trade Bot, and no one else. Other people can use the `help`, `serverinfo`, `userinfo` and `get` commands, but the `send` command will only apply to you. To get your role ID, Go to your Server Settings -> Roles -> Right click on the role you have, and click on 'Copy ID', paste that in this variable. Refer to the image below:
+
+    ![image](https://user-images.githubusercontent.com/31774135/120892351-7c864600-c62b-11eb-8905-935b3252b946.png)
     
     - Now we get into the nitty-gritty stuff 😛
       - Below `bot_owner_id`, you will see `const bot_ids`. This where you will set the names to call your bots along with the Steam ID64 of the bots. For example, I have 2 bots, named herpatron and derpatron. Therefore, my `bot_ids` will look like shown:
