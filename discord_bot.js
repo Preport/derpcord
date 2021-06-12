@@ -92,7 +92,7 @@ function redDiscordMessage(embed_title, bot_reply){
     return embed;
 }
 
-function complexEmbed(embed_title, bot_reply, bot){
+function complexEmbedBotInfo(embed_title, bot_reply, bot){
     bot = bot.toLowerCase();
     let embed = new Discord.MessageEmbed()
     .setTitle(embed_title)
@@ -104,6 +104,54 @@ function complexEmbed(embed_title, bot_reply, bot){
     },
     {
         name: 'Trade Offer', value: `[Send me an offer](${bot_trade_offer[bot]})`, inline: true
+    }
+    )
+    .setTimestamp();
+    return embed;
+}
+
+function isSkin(attributes) {
+    return !!attributes.wear;
+}
+function getStatsPage(sku) {
+    //console.log(sku);
+    var attributes = format.parseSKU(sku);
+    var listingAttributes = format.createBPListing(attributes);
+    var path = "" + listingAttributes.quality;
+    if (isSkin(attributes)) {
+        if (listingAttributes.quality === 'Unusual'){
+            path = 'Decorated Weapon';
+        }
+        path += '/';
+        if (attributes.killstreak){
+            path += attributes.killstreak + " ";
+        }
+        path += attributes.texture + " | " + attributes.name + " (" + attributes.wear + ")";
+    }
+    else {
+        path += "/" + listingAttributes.item_name;
+    }
+    path += '/Tradable';
+    path += attributes.craftable ? '/Craftable' : '/Non-Craftable';
+    if (listingAttributes.priceindex){
+        path += "/" + listingAttributes.priceindex;
+    }
+    return "https://backpack.tf/stats/" + path;
+}
+
+
+function itemStats(embed_title, bot_reply, sku){
+    let item_stats = encodeURI(getStatsPage(sku));
+    console.log(item_stats);
+    let embed = new Discord.MessageEmbed()
+    .setTitle(embed_title)
+    .setColor('#00ff00')
+    .setDescription(bot_reply)
+    .addFields({
+        name: 'backpack.tf', value: `[Click Here](${item_stats})`, inline: true
+    },
+    {
+        name: 'marketplace.tf', value: `[Click Here](https://marketplace.tf/items/tf2/${sku})`, inline: true
     }
     )
     .setTimestamp();
@@ -167,7 +215,7 @@ discord_client.on('message', message => {
             message.channel.send(embed);
         }
         else if(command === `send`){
-            if(message.member.roles.cache.has(bot_owner_id)){
+            if(message.author.id == bot_owner_id){
                 if(!args.length){
                     return message.channel.send(`No arguments were provided, ${message.author}!`);
                 }
@@ -179,7 +227,7 @@ discord_client.on('message', message => {
                                 let bot_id = bot_ids[bot];
                                 steam_client.chatMessage(bot_id, bot_message);
                                 bot = bot.charAt(0).toUpperCase() + bot.slice(1);
-                                let embed = complexEmbed('Steam Message Sent!', `Message sent to ${bot} with the message: \`${bot_message}\``, bot);
+                                let embed = greenDiscordMessage('Steam Message Sent!', `Message sent to ${bot} with the message: \`${bot_message}\``, bot);
                                 message.channel.send(embed);
                                 }
                             }
@@ -197,7 +245,7 @@ discord_client.on('message', message => {
                             steam_client.chatMessage(single_bot_id, bot_message);
                             let bot_name = getKeyByValue(bot_ids, single_bot_id);
                             bot_name = bot_name.charAt(0).toUpperCase() + bot_name.slice(1);
-                            let embed = complexEmbed('Steam Message Sent!', `\`${bot_message}\` sent to ${bot_name}!`, bot_name);
+                            let embed = greenDiscordMessage('Steam Message Sent!', `\`${bot_message}\` sent to ${bot_name}!`, bot_name);
                             message.channel.send(embed);
                             }
                         else{
@@ -233,7 +281,7 @@ discord_client.on('message', message => {
                         return;
                     }
                     console.log(item_name);
-                    let embed = greenDiscordMessage("Item from SKU", `The name SKU: ${args[0]} is: ${item_name}`);
+                    let embed = itemStats("Item from SKU", `The name SKU: ${args[0]} is: ${item_name}`, item_sku);
                     return message.channel.send(embed);
                 }
                 else{
@@ -250,7 +298,7 @@ discord_client.on('message', message => {
                         let embed = redDiscordMessage("Invalid SKU!", `Unable to fetch the SKU for ${args[0]}`);
                         return message.channel.send(embed);
                     }
-                    let embed = greenDiscordMessage("SKU Value", `The SKU of ${args[0]} is ${item_sku}`);
+                    let embed = itemStats("SKU Value", `The SKU of ${args[0]} is ${item_sku}`);
                     return message.channel.send(embed);
                 }
             }
@@ -283,7 +331,7 @@ steam_client.on('friendMessage', function(steamID, response){
     //console.log(String(steamID));
     var bot_name = getKeyByValue(bot_ids, String(steamID));
     bot_name = bot_name.charAt(0).toUpperCase() + bot_name.slice(1);
-    let embed = complexEmbed(`Steam Message Received!`, `Message received from ${bot_name}!\n${response}`, bot_name);
+    let embed = complexEmbedBotInfo(`Steam Message Received!`, `Message received from ${bot_name}!\n${response}`, bot_name);
    channel.send(embed);
 });
 

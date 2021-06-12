@@ -1,6 +1,6 @@
 {
   "name": "derpcord",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "discord_bot.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "discord.js": "^12.5.3",
     "steam-totp": "^2.1.1",
     "steam-user": "^4.19.7",
-    "tf2-item-format": "4.3.2"
+    "tf2-item-format": "^5.2.0"
   },
   "devDependencies": {
     "eslint": "^7.26.0"
