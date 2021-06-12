@@ -18,9 +18,9 @@ This project was heavily inspired by [tf2autocord](https://github.com/Gobot1234/
 
 ![image](https://user-images.githubusercontent.com/31774135/120798505-13cf9880-c55b-11eb-9185-6a6d0ec5f095.png)
 
-- Don't know the name of your item, but you have the SKU for it? Or you have the name of the item, but don't know the SKU? Got you covered!
+- Don't know the name of your item, but you have the SKU for it? Or you have the name of the item, but don't know the SKU? Got you covered! Works the other way too!
 
-![image](https://user-images.githubusercontent.com/31774135/120798632-44173700-c55b-11eb-8aaf-cf21908c1788.png)
+![image](https://user-images.githubusercontent.com/31774135/121766092-3ec67780-cb6d-11eb-9d92-d6dabcc94618.png)
 
 - **More features to come!** I will try to implment more features while I have free time, so stay tuned™!
 
