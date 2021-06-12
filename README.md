@@ -48,9 +48,9 @@ This project was heavily inspired by [tf2autocord](https://github.com/Gobot1234/
 
     ![image](https://user-images.githubusercontent.com/31774135/120828531-4210a080-c57a-11eb-9663-9ff3051c63ba.png)
     
-    - Next, you will need to enter your own ID. You will see a variable called `bot_owner_id`. This will let the bot know that you are the owner, and only you can access the commands that will be sent to the Trade Bot, and no one else. Other people can use the `help`, `serverinfo`, `userinfo` and `get` commands, but the `send` command will only apply to you. To get your role ID, Go to your Server Settings -> Roles -> Right click on the role you have, and click on 'Copy ID', paste that in this variable. Refer to the image below:
+    - Next, you will need to enter your own ID. You will see a variable called `bot_owner_id`. This will let the bot know that you are the owner, and only you can access the commands that will be sent to the Trade Bot, and no one else. Other people can use the `help`, `serverinfo`, `userinfo` and `get` commands, but the `send` command will only apply to you. To get your role ID, right click on your name on the right panel, and click on 'Copy ID', paste that in this variable. Refer to the image below:
 
-    ![image](https://user-images.githubusercontent.com/31774135/120892351-7c864600-c62b-11eb-8905-935b3252b946.png)
+    ![image](https://user-images.githubusercontent.com/31774135/121766067-09218e80-cb6d-11eb-89be-96724ca6642b.png)
     
     - Now we get into the nitty-gritty stuff 😛
       - Below `bot_owner_id`, you will see `const bot_ids`. This where you will set the names to call your bots along with the Steam ID64 of the bots. For example, I have 2 bots, named herpatron and derpatron. Therefore, my `bot_ids` will look like shown:
