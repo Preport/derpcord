@@ -1,23 +1,25 @@
 //Discord Stuff
 
 const Discord = require('discord.js');
-const {prefix, token} = require('./config/discord_config');
+const { prefix, token } = require('./config/discord_config');
 const discord_client = new Discord.Client();
 const commands_channel_id = '<enter id of the channel where you want to send commands to the bot to>';
 const bot_owner_id = '<enter your id here>';
 
 const bot_ids = {
-    '<what you want to call your bot here>' : '<steam id64 of your bot>'
+    '<what you want to call your bot here>': '<steam id64 of your bot>'
 };
 
 const bot_pictures = {
-    '<what you call your bot here, same as above>' : '<url of your bots profile picture, make sure it ends in .jpg or .png>'
+    '<what you call your bot here, same as above>':
+        '<url of your bots profile picture, make sure it ends in .jpg or .png>'
 };
 
 const bot_trade_offer = {
-    '<what you call your bot>' : '<trade offer url of your bot>'
+    '<what you call your bot>': '<trade offer url of your bot>'
 };
 
+// TODO CHANGE ^^ THIS
 
 //Steam Stuff
 
@@ -28,9 +30,9 @@ const format = require('tf2-item-format');
 const steam_client = new SteamUser();
 let steam_login_flag = false;
 const logInOptions = {
-	accountName: steam_config.accountName,
-	password: steam_config.password,
-	twoFactorCode: SteamTotp.generateAuthCode(steam_config.sharedSecret)
+    accountName: steam_config.accountName,
+    password: steam_config.password,
+    twoFactorCode: SteamTotp.generateAuthCode(steam_config.sharedSecret)
 };
 
 //Logging in...
@@ -43,13 +45,15 @@ async function logInEvents() {
 
     await new Promise(resolve => {
         steam_client.once('loggedOn', resolve);
-        steam_client.on('error', (err) => {
-            let err_embed = new Discord.MessageEmbed()
-            .setTitle("Error!")
-            .setColor('#ff0000')
-            .setDescription(`I have failed to log on to Steam! Error is ${err}. Retrying in 30 seconds...`);
-           channel_name.send(err_embed);
-           setTimeout(steam_client.logOn, 30000, logInOptions);
+        steam_client.on('error', err => {
+            channel_name.send(
+                discordMessage(
+                    'Error!',
+                    `I have failed to log on to Steam! Error is ${err}. Retrying in 30 seconds...`,
+                    'red'
+                )
+            );
+            setTimeout(steam_client.logOn, 30000, logInOptions);
         });
     });
     steam_client.setPersona(SteamUser.EPersonaState.Online);
@@ -58,56 +62,83 @@ async function logInEvents() {
     steam_login_flag = true;
 
     let channel_name = discord_client.channels.cache.get(commands_channel_id);
-    let embed = new Discord.MessageEmbed()
-    .setTitle("Steam Login")
-    .setColor('#00ff00')
-    .setDescription('Logged in to Steam and set my game to TF2! :white_check_mark:');
-    channel_name.send(embed);
+    channel_name.send(
+        discordMessage('Steam Login', 'Logged in to Steam and set my game to TF2! :white_check_mark:', 'green')
+    );
 }
-
 
 //Discord Message Embeds Functions
+const colors = Object.freeze({
+    green: '#00ff00',
+    red: '#ff0000',
+    orange: '#ff4500'
+});
 
-function greenDiscordMessage(embed_title, bot_reply){
-    let embed = new Discord.MessageEmbed()
-    .setColor('#00ff00')
-    .setTitle(embed_title)
-    .setDescription(bot_reply);
-    return embed;
-}
-
-function orangeDiscordMessage(embed_title, bot_reply){
-    let embed = new Discord.MessageEmbed()
-    .setColor('#ff4500')
-    .setTitle(embed_title)
-    .setDescription(bot_reply);
-    return embed;
-}
-
-function redDiscordMessage(embed_title, bot_reply){
-    let embed = new Discord.MessageEmbed()
-    .setColor('#ff0000')
-    .setTitle(embed_title)
-    .setDescription(bot_reply);
-    return embed;
-}
-
-function complexEmbedBotInfo(embed_title, bot_reply, bot){
-    bot = bot.toLowerCase();
-    let embed = new Discord.MessageEmbed()
-    .setTitle(embed_title)
-    .setThumbnail(bot_pictures[bot])
-    .setColor('#00ff00')
-    .setDescription(bot_reply)
-    .addFields({
-        name: 'Backpack', value: `[Click Here](https://backpack.tf/profiles/${bot_ids[bot]})`, inline: true
+const commandMap = {
+    help: {
+        title: 'List of Commands',
+        message: Object.keys(commandMap)
+            .map((cmd, index) => `${index + 1}) \`${prefix + cmd}\` -> ${commandMap[cmd].description}`)
+            .join('\n'),
+        color: 'green',
+        description: 'Shows this message'
     },
-    {
-        name: 'Trade Offer', value: `[Send me an offer](${bot_trade_offer[bot]})`, inline: true
+    beep: {
+        title: '',
+        message: '**Boop!**\t  :white_check_mark:',
+        color: 'green',
+        description: 'Boop!'
+    },
+    serverinfo: {
+        title: 'Server Information',
+        message: message =>
+            `Server name is: ${message.guild.name}\nTotal number of members are: ${message.guild.memberCount}`,
+        color: '#7851a9',
+        description: 'Basic server info!'
+    },
+    userinfo: {
+        title: 'User Information',
+        message: message =>
+            `Your Discord name is: ${message.author.username}, and your Unique ID is: ${message.author.id}`,
+        color: 'orange',
+        description: 'Basic account info about yourself'
+    },
+    send: {
+        message: sendCommand,
+        description: 'Send a command to the bot',
+        useArgs: true
+    },
+    get: {
+        message: getCommand,
+        description: 'Get the name of an item',
+        useArgs: true
     }
-    )
-    .setTimestamp();
-    return embed;
+};
+function discordMessage(embed_title, bot_reply, embed_color) {
+    return new Discord.MessageEmbed()
+        .setColor(colors[embed_color] || embed_color)
+        .setTitle(embed_title)
+        .setDescription(bot_reply);
+}
+
+function complexEmbedBotInfo(embed_title, bot_reply, bot) {
+    bot = bot.toLowerCase();
+
+    return discordMessage(embed_title, bot_reply, 'green')
+        .setThumbnail(bot_pictures[bot])
+        .addFields(
+            {
+                name: 'Backpack',
+                value: `[Click Here](https://backpack.tf/profiles/${bot_ids[bot]})`,
+                inline: true
+            },
+            {
+                name: 'Trade Offer',
+                value: `[Send me an offer](${bot_trade_offer[bot]})`,
+                inline: true
+            }
+        )
+        .setTimestamp();
 }
 
 function isSkin(attributes) {
@@ -117,222 +148,175 @@ function getStatsPage(sku) {
     //console.log(sku);
     var attributes = format.parseSKU(sku);
     var listingAttributes = format.createBPListing(attributes);
-    var path = "" + listingAttributes.quality;
+    var path = '' + listingAttributes.quality;
     if (isSkin(attributes)) {
-        if (listingAttributes.quality === 'Unusual'){
+        if (listingAttributes.quality === 'Unusual') {
             path = 'Decorated Weapon';
         }
         path += '/';
-        if (attributes.killstreak){
-            path += attributes.killstreak + " ";
+        if (attributes.killstreak) {
+            path += attributes.killstreak + ' ';
         }
-        path += attributes.texture + " | " + attributes.name + " (" + attributes.wear + ")";
+        path += attributes.texture + ' | ' + attributes.name + ' (' + attributes.wear + ')';
     }
     else {
-        path += "/" + listingAttributes.item_name;
+        path += '/' + listingAttributes.item_name;
     }
     path += '/Tradable';
     path += attributes.craftable ? '/Craftable' : '/Non-Craftable';
-    if (listingAttributes.priceindex){
-        path += "/" + listingAttributes.priceindex;
+    if (listingAttributes.priceindex) {
+        path += '/' + listingAttributes.priceindex;
     }
-    return "https://backpack.tf/stats/" + path;
+    return 'https://backpack.tf/stats/' + path;
 }
 
-
-function itemStats(embed_title, bot_reply, sku){
+function itemStats(embed_title, bot_reply, sku) {
     let item_stats = encodeURI(getStatsPage(sku));
     console.log(item_stats);
-    let embed = new Discord.MessageEmbed()
-    .setTitle(embed_title)
-    .setColor('#00ff00')
-    .setDescription(bot_reply)
-    .addFields({
-        name: 'backpack.tf', value: `[Click Here](${item_stats})`, inline: true
-    },
-    {
-        name: 'marketplace.tf', value: `[Click Here](https://marketplace.tf/items/tf2/${sku})`, inline: true
-    }
-    )
-    .setTimestamp();
-    return embed;
+    return discordMessage(embed_title, bot_reply, 'green')
+        .addFields(
+            {
+                name: 'backpack.tf',
+                value: `[Click Here](${item_stats})`,
+                inline: true
+            },
+            {
+                name: 'marketplace.tf',
+                value: `[Click Here](https://marketplace.tf/items/tf2/${sku})`,
+                inline: true
+            }
+        )
+        .setTimestamp();
 }
 
 //Miscellaneous Functions
 
 function getKeyByValue(object, value) {
     return Object.keys(object).find(key => object[key] === value);
-  }
-
-function isSku(str){
-    var specialChars = ";";
-    for(let i = 0; i < specialChars.length;i++){
-        if(str.indexOf(specialChars[i]) > -1){
-            return true;
-        }
-        else{
-            return false;
-        }
-    }
 }
-
 
 //Message functions
 
 discord_client.on('message', message => {
-    if (message.author.bot) return;
-    if(!message.content.startsWith(prefix)) return;
-    if(message.channel.id != commands_channel_id){
-        if (message.author.bot) return;
+    if (message.author.bot || !message.content.startsWith(prefix)) return;
+
+    if (message.channel.id != commands_channel_id) {
         let channel_name = message.guild.channels.cache.get(commands_channel_id).toString();
-        let embed = redDiscordMessage("Error!", `You are not allowed to send commands here, ${message.author}! Please use ${channel_name} to send commands to me.`);
-        message.channel.send(embed);
-        if (message.author.bot) return;
+        let embed = discordMessage(
+            'Error!',
+            `You are not allowed to send commands here, ${message.author}! Please use ${channel_name} to send commands to me.`,
+            'red'
+        );
+        return message.channel.send(embed);
     }
-    else{
-        if (!message.content.startsWith(prefix) || message.author.bot) return;
-        const args = message.content.slice(prefix.length).trim().split(/ +/);
-        const command = args.shift().toLowerCase();
-        console.debug(`Message received from user ${message.author.id}: ${message}`);
-        //All commands go here
-        if(command === `help`) {
-            let embed = greenDiscordMessage('List of Commands', '1) `.beep` -> Boop!\n2) `.serverinfo` -> Basic server info\n3) `.userinfo` -> Basic account info about yourself\n');
-            message.channel.send(embed);
-        }
-        else if(command === `beep`){
-            let embed = greenDiscordMessage('', '**Boop!**\t  :white_check_mark:');
-            message.channel.send(embed);
-        }
-        else if(command === `serverinfo`){
-            let embed = new Discord.MessageEmbed()
-            .setTitle('Server Information')
-            .setColor('#7851a9')
-            .setDescription(`Server name is: ${message.guild.name}\nTotal number of members are: ${message.guild.memberCount}`);
-            message.channel.send(embed);
-        }
-        else if(command === `userinfo`){
-            let embed = orangeDiscordMessage('User Information', `Your Discord name is: ${message.author.username}, and your Unique ID is: ${message.author.id}`);
-            message.channel.send(embed);
-        }
-        else if(command === `send`){
-            if(message.author.id == bot_owner_id){
-                if(!args.length){
-                    return message.channel.send(`No arguments were provided, ${message.author}!`);
-                }
-                else{
-                    let bot_message = args.slice(1).join(' ');
-                    if(args[0] == 'all'){
-                        for(let bot in bot_ids){
-                            if(steam_login_flag){
-                                let bot_id = bot_ids[bot];
-                                steam_client.chatMessage(bot_id, bot_message);
-                                bot = bot.charAt(0).toUpperCase() + bot.slice(1);
-                                let embed = greenDiscordMessage('Steam Message Sent!', `Message sent to ${bot} with the message: \`${bot_message}\``, bot);
-                                message.channel.send(embed);
-                                }
-                            }
-                        return;
-                    }
-                    else{
-                        let single_bot_id = String(bot_ids[args[0]]);
-                        //console.log(bot_id);
-                        if (!(args[0] in bot_ids)){
-                            let embed = redDiscordMessage('Error!', 'This bot does not exist, please try again.');
-                            message.channel.send(embed);
-                            return;
-                        }
-                        if(steam_login_flag){
-                            steam_client.chatMessage(single_bot_id, bot_message);
-                            let bot_name = getKeyByValue(bot_ids, single_bot_id);
-                            bot_name = bot_name.charAt(0).toUpperCase() + bot_name.slice(1);
-                            let embed = greenDiscordMessage('Steam Message Sent!', `\`${bot_message}\` sent to ${bot_name}!`, bot_name);
-                            message.channel.send(embed);
-                            }
-                        else{
-                            let embed = redDiscordMessage('Steam Message Error!', `I am unable to send a message as I have not logged in to steam!`);
-                            message.channel.send(embed);
-                            return;
-                        }
-                    }
-                }
-            }
-            else{
-                message.reply(`you are not allowed to use that command.`);
-                return;
-            }
-        }
-        else if (command === `get`){
-            if(!args.length){
-                return message.channel.send(`No arguments were provided, ${message.author}!`);
-            }
-            let len = args.length;
-            if(len == 1){
-                if(isSku(args[0])){
-                    //console.log('Entering to check SKU');
-                    let item_sku = args[0];
-                    let item_name = '';
-                    try{
-                        var attributes = format.parseSKU(item_sku);
-                        item_name = format.stringify(attributes);
-                    }
-                    catch(e){
-                        let embed = redDiscordMessage("Error fetching item name!", `Unable to fetch the name for ${args[0]}, the error was ${e}`);
-                        message.channel.send(embed);
-                        return;
-                    }
-                    console.log(item_name);
-                    let embed = itemStats("Item from SKU", `The name SKU: ${args[0]} is: ${item_name}`, item_sku);
-                    return message.channel.send(embed);
-                }
-                else{
-                    let item_sku = "";
-                    try{
-                        let item_attributes = format.parseString(args[0], true, true);
-                        item_sku = format.toSKU(item_attributes);
-                    }
-                    catch(e){
-                        let embed = redDiscordMessage("Error fetching item SKU!", `Unable to fetch the SKU for ${args[0]}, the error was ${e}`);
-                        return message.channel.send(embed);
-                    }
-                    if(item_sku == 'null;null'){
-                        let embed = redDiscordMessage("Invalid SKU!", `Unable to fetch the SKU for ${args[0]}`);
-                        return message.channel.send(embed);
-                    }
-                    let embed = itemStats("SKU Value", `The SKU of ${args[0]} is ${item_sku}`);
-                    return message.channel.send(embed);
-                }
-            }
-            else{
-                //Change array of strings to single string
-                let full_item_name = args.join(' ');
-                console.log(full_item_name);
-                let item_sku = '';
-                try{
-                    let item_attributes = format.parseString(full_item_name, true, true);
-                    item_sku = format.toSKU(item_attributes);
-                }
-                catch(e){
-                    let embed = redDiscordMessage("Error fetching item SKU!", `Unable to fetch the SKU for ${args[0]}, the error was ${e}`);
-                    return message.channel.send(embed);
-                }
-                if(item_sku == 'null;null'){
-                    let embed = redDiscordMessage("Invalid SKU!", `Unable to fetch the SKU for ${args[0]}`);
-                    return message.channel.send(embed);
-                }
-                let embed = greenDiscordMessage("SKU Value", `The SKU of ${full_item_name} is ${item_sku}`);
-                    return message.channel.send(embed);
-            }
-        }
+
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    const command = args.shift().toLowerCase();
+    console.debug(`Message received from user ${message.author.id}: ${message}`);
+    //All commands go here
+    const commandObject = commandMap[command];
+    if (!commandObject) return message.reply(`Unknown command type \`${prefix}help\` to see available commands.`);
+
+    if (commandObject.title === undefined) {
+        const recCommand = commandObject.message(message, commandObject.useArgs ? args : undefined);
+        // We've received null or undefined
+        if (!recCommand) return;
+        Object.assign(commandObject, recCommand);
     }
+    else if (typeof commandObject.message === 'function') {
+        commandObject.message = commandObject.message(message, commandObject.useArgs ? args : undefined);
+    }
+
+    if (commandObject.reply) message.reply(commandObject.message);
+    else message.channel.send(discordMessage(commandObject.title, commandObject.message, commandObject.color));
 });
 
-steam_client.on('friendMessage', function(steamID, response){
+function getCommand(message, args) {
+    function errMessage(msg, title) {
+        return Object.assign(
+            { message: msg, reply: true },
+            title
+                ? {
+                    title,
+                    color: 'red',
+                    reply: false
+                }
+                : {}
+        );
+    }
+
+    if (!args.length) return errMessage(`No arguments were provided!`);
+
+    const itemName = args.filter(i => i).join(' ');
+    const isSKU = itemName.includes(';');
+
+    try {
+        let attributes;
+        if (isSKU) {
+            attributes = format.parseSKU(itemName);
+            const item_name = format.stringify(attributes);
+            message.channel.send(itemStats('Item from SKU', `The name SKU: ${itemName} is: ${item_name}`, itemName));
+        }
+        else {
+            attributes = format.parseString(itemName, true, true);
+            const sku = format.parseSKU(attributes);
+            if (format.parseSKU(attributes) == 'null;null') { return errMessage(`Unable to fetch SKU for ${itemName}`, 'Invalid SKU!'); }
+
+            message.channel.send(itemStats('SKU Value', `The SKU of ${itemName} is ${sku}`, sku));
+        }
+    }
+    catch (e) {
+        return errMessage(`Unable to fetch the ${isSKU ? 'sku' : 'name'} for ${itemName}, the error was ${e}`);
+    }
+}
+function sendCommand(message, args) {
+    // if we want to send an embed title should be defined
+    function errMessage(msg, title) {
+        return Object.assign(
+            { message: msg, reply: true },
+            title
+                ? {
+                    title,
+                    color: 'red',
+                    reply: false
+                }
+                : {}
+        );
+    }
+
+    if (message.author.id !== bot_owner_id) return errMessage('you are not allowed to use that command.');
+    if (!args.length) return errMessage(`No arguments were provided!`);
+
+    const botMessage = args.slice(1).join(' ');
+
+    //filter undefined
+    const bots = (args[0] === 'all' ? bot_ids : [bot_ids[args[0]]]).map(i => i);
+
+    if (!bots.length) return errMessage('This bot does not exist, please try again.', 'Error!');
+    if (!steam_login_flag) { return errMessage('I am unable to send a message as I have not logged in to steam!', 'Steam Message Error!'); }
+
+    for (let bot in bots) {
+        const botID = bots[bot];
+
+        steam_client.chatMessage(botID, botMessage);
+        bot = bot.charAt(0).toUpperCase() + bot.slice(1);
+        message.channel.send(
+            discordMessage('Steam Message Sent!', `Message sent to ${bot} with the message: \`${botMessage}\``, 'green')
+        );
+    }
+}
+
+steam_client.on('friendMessage', function (steamID, response) {
     let channel = discord_client.channels.cache.get(commands_channel_id);
     //console.log(String(steamID));
     var bot_name = getKeyByValue(bot_ids, String(steamID));
     bot_name = bot_name.charAt(0).toUpperCase() + bot_name.slice(1);
-    let embed = complexEmbedBotInfo(`Steam Message Received!`, `Message received from ${bot_name}!\n${response}`, bot_name);
-   channel.send(embed);
+    let embed = complexEmbedBotInfo(
+        `Steam Message Received!`,
+        `Message received from ${bot_name}!\n${response}`,
+        bot_name
+    );
+    channel.send(embed);
 });
 
 logInEvents();
