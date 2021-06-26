@@ -1,23 +1,12 @@
 //Discord Stuff
 
 const Discord = require('discord.js');
-const { prefix, token } = require('./config/discord_config');
+
+const [config, checkNameOrPicture] = require('./configParser');
+
+const axios = checkNameOrPicture ? require('axios') : null;
+
 const discord_client = new Discord.Client();
-const commands_channel_id = '<enter id of the channel where you want to send commands to the bot to>';
-const bot_owner_id = '<enter your id here>';
-
-const bot_ids = {
-    '<what you want to call your bot here>': '<steam id64 of your bot>'
-};
-
-const bot_pictures = {
-    '<what you call your bot here, same as above>':
-        '<url of your bots profile picture, make sure it ends in .jpg or .png>'
-};
-
-const bot_trade_offer = {
-    '<what you call your bot>': '<trade offer url of your bot>'
-};
 
 // TODO CHANGE ^^ THIS
 
@@ -25,20 +14,19 @@ const bot_trade_offer = {
 
 const SteamUser = require('steam-user');
 const SteamTotp = require('steam-totp');
-const steam_config = require('./config/steam_config');
 const format = require('tf2-item-format');
 const steam_client = new SteamUser();
 let steam_login_flag = false;
 const logInOptions = {
-    accountName: steam_config.accountName,
-    password: steam_config.password,
-    twoFactorCode: SteamTotp.generateAuthCode(steam_config.sharedSecret)
+    accountName: config.STEAM_ACCOUNT_NAME,
+    password: config.STEAM_PASSWORD,
+    twoFactorCode: SteamTotp.generateAuthCode(config.STEAM_SHARED_SECRET)
 };
 
 //Logging in...
 
 async function logInEvents() {
-    discord_client.login(token);
+    discord_client.login(config.DISCORD_TOKEN);
     await new Promise(resolve => discord_client.once('ready', resolve));
     console.log('Discord Bot has logged in!');
     steam_client.logOn(logInOptions);
@@ -55,13 +43,49 @@ async function logInEvents() {
             );
             setTimeout(steam_client.logOn, 30000, logInOptions);
         });
+        steam_client.on('steamGuard', function (_domain, callback, lastCodeWrong) {
+            setTimeout(() => callback(SteamTotp.generateAuthCode(config.STEAM_SHARED_SECRET)), lastCodeWrong ? 30000 : 5000);
+        });
     });
     steam_client.setPersona(SteamUser.EPersonaState.Online);
     steam_client.gamesPlayed(440);
     console.log('Steam Bot is now online and game has been set to TF2!');
     steam_login_flag = true;
 
-    let channel_name = discord_client.channels.cache.get(commands_channel_id);
+    const allBots = Object.keys(config.BOTS);
+    // Update bot's pictures and names if they are empty :)
+    await new Promise((resolve, reject) => {
+
+        let totalAmt = allBots.length;
+        allBots.forEach(id => {
+            const bot = config.BOTS[id];
+            bot.id = id;
+            if (!(bot.name && bot.picture)) {
+                axios.get(`https://steamcommunity.com/profiles/${id}?xml=1&l=english`)
+                    .then(resp => {
+                        if (resp.data.includes('The specified profile could not be found.')) return reject(`The profile with the steamID: ${id} doesn't exist`)
+
+                        const lines = resp.data.split('\n')
+
+                        if (!bot.name) {
+                            const nameLine = lines.find(i => i.trim().startsWith('<steamID><!'))
+                            bot.name = nameLine.substring(nameLine.search('\\\[CDATA\\\[') + 7, nameLine.search(']]></'));
+                        }
+                        if (!bot.picture) {
+                            const picLine = lines.find(i => i.trim().startsWith('<avatarFull><!'))
+                            bot.picture = picLine.substring(picLine.search('\\\[CDATA\\\[') + 7, picLine.search(']]></'));
+                        }
+                        if (--totalAmt === 0) resolve();
+                    })
+                    .catch(err => {
+                        reject(`Couldn't fetch the picture or/and name of a bot: ${err}`)
+                    })
+            } else if (--totalAmt === 0) resolve();
+        })
+    })
+
+    let channel_name = discord_client.channels.cache.get(config.DISCORD_BOT_COMMAND_CHANNEL);
+    if (!channel_name) throw new Error(`Discord bot does not have permission to channel ${config.DISCORD_BOT_COMMAND_CHANNEL}`);
     channel_name.send(
         discordMessage('Steam Login', 'Logged in to Steam and set my game to TF2! :white_check_mark:', 'green')
     );
@@ -77,8 +101,8 @@ const colors = Object.freeze({
 const commandMap = {
     help: {
         title: 'List of Commands',
-        message: Object.keys(commandMap)
-            .map((cmd, index) => `${index + 1}) \`${prefix + cmd}\` -> ${commandMap[cmd].description}`)
+        message: () => Object.keys(commandMap)
+            .map((cmd, index) => `${index + 1}) \`${config.DISCORD_PREFIX + cmd}\` -> ${commandMap[cmd].description}`)
             .join('\n'),
         color: 'green',
         description: 'Shows this message'
@@ -112,6 +136,12 @@ const commandMap = {
         message: getCommand,
         description: 'Get the name of an item',
         useArgs: true
+    },
+    list: {
+        title: 'List of Bots',
+        message: () => getAllTheBots().map((bot, ind) => `${ind + 1}) ${bot.name} | ${bot.id}`).join('\n'),
+        color: 'green',
+        description: 'Lists the current bots that can be messaged'
     }
 };
 function discordMessage(embed_title, bot_reply, embed_color) {
@@ -122,22 +152,19 @@ function discordMessage(embed_title, bot_reply, embed_color) {
 }
 
 function complexEmbedBotInfo(embed_title, bot_reply, bot) {
-    bot = bot.toLowerCase();
-
+    const fields = [{
+        name: 'Backpack',
+        value: `[Click Here](https://backpack.tf/profiles/${bot.id})`,
+        inline: true
+    }]
+    bot.tradeOfferURL ? fields.push({
+        name: 'Trade Offer',
+        value: `[Send me an offer](${bot.tradeOfferURL})`,
+        inline: true
+    }) : null;
     return discordMessage(embed_title, bot_reply, 'green')
-        .setThumbnail(bot_pictures[bot])
-        .addFields(
-            {
-                name: 'Backpack',
-                value: `[Click Here](https://backpack.tf/profiles/${bot_ids[bot]})`,
-                inline: true
-            },
-            {
-                name: 'Trade Offer',
-                value: `[Send me an offer](${bot_trade_offer[bot]})`,
-                inline: true
-            }
-        )
+        .setThumbnail(bot.picture)
+        .addFields(...fields)
         .setTimestamp();
 }
 
@@ -189,19 +216,13 @@ function itemStats(embed_title, bot_reply, sku) {
         .setTimestamp();
 }
 
-//Miscellaneous Functions
-
-function getKeyByValue(object, value) {
-    return Object.keys(object).find(key => object[key] === value);
-}
-
 //Message functions
 
 discord_client.on('message', message => {
-    if (message.author.bot || !message.content.startsWith(prefix)) return;
+    if (message.author.bot || !message.content.startsWith(config.DISCORD_PREFIX)) return;
 
-    if (message.channel.id != commands_channel_id) {
-        let channel_name = message.guild.channels.cache.get(commands_channel_id).toString();
+    if (message.channel.id != config.DISCORD_BOT_COMMAND_CHANNEL) {
+        let channel_name = message.guild.channels.cache.get(config.DISCORD_BOT_COMMAND_CHANNEL).toString();
         let embed = discordMessage(
             'Error!',
             `You are not allowed to send commands here, ${message.author}! Please use ${channel_name} to send commands to me.`,
@@ -210,12 +231,12 @@ discord_client.on('message', message => {
         return message.channel.send(embed);
     }
 
-    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    const args = message.content.slice(config.DISCORD_PREFIX.length).trim().split(/ +/);
     const command = args.shift().toLowerCase();
     console.debug(`Message received from user ${message.author.id}: ${message}`);
     //All commands go here
     const commandObject = commandMap[command];
-    if (!commandObject) return message.reply(`Unknown command type \`${prefix}help\` to see available commands.`);
+    if (!commandObject) return message.reply(`Unknown command type \`${config.DISCORD_PREFIX}help\` to see available commands.`);
 
     if (commandObject.title === undefined) {
         const recCommand = commandObject.message(message, commandObject.useArgs ? args : undefined);
@@ -284,33 +305,30 @@ function sendCommand(message, args) {
         );
     }
 
-    if (message.author.id !== bot_owner_id) return errMessage('you are not allowed to use that command.');
+    if (message.author.id !== config.DISCORD_BOT_OWNER_ID) return errMessage('you are not allowed to use that command.');
     if (!args.length) return errMessage(`No arguments were provided!`);
 
-    const botMessage = args.slice(1).join(' ');
-
     //filter undefined
-    const bots = (args[0] === 'all' ? bot_ids : [bot_ids[args[0]]]).map(i => i);
+    const [bots, cmdIndex] = (args[0] === 'all' ? [getAllTheBots(), 1] : matchBot(args).map((botOrIndex, index) => index ? botOrIndex : [botOrIndex]))
+    //console.log(bots);
+    if (!bots[0]) return errMessage('This bot does not exist, please try again.', 'Error!');
+    if (!steam_login_flag) return errMessage('I am unable to send a message as I have not logged in to steam!', 'Steam Message Error!');
 
-    if (!bots.length) return errMessage('This bot does not exist, please try again.', 'Error!');
-    if (!steam_login_flag) { return errMessage('I am unable to send a message as I have not logged in to steam!', 'Steam Message Error!'); }
-
-    for (let bot in bots) {
-        const botID = bots[bot];
-
-        steam_client.chatMessage(botID, botMessage);
-        bot = bot.charAt(0).toUpperCase() + bot.slice(1);
+    const botMessage = args.slice(cmdIndex).join(' ');
+    for (let bot of bots) {
+        steam_client.chatMessage(bot.id, botMessage);
+        const name = bot.name.charAt(0).toUpperCase() + bot.name.slice(1);
         message.channel.send(
-            discordMessage('Steam Message Sent!', `Message sent to ${bot} with the message: \`${botMessage}\``, 'green')
+            complexEmbedBotInfo('Steam Message Sent!', `\`${botMessage}\` sent to ${name}!`, bot)
         );
     }
 }
 
 steam_client.on('friendMessage', function (steamID, response) {
-    let channel = discord_client.channels.cache.get(commands_channel_id);
+    let channel = discord_client.channels.cache.get(config.DISCORD_BOT_COMMAND_CHANNEL);
     //console.log(String(steamID));
-    var bot_name = getKeyByValue(bot_ids, String(steamID));
-    bot_name = bot_name.charAt(0).toUpperCase() + bot_name.slice(1);
+    const bot = config.BOTS[steamID];
+    const bot_name = bot.name.charAt(0).toUpperCase() + bot.name.slice(1);
     let embed = complexEmbedBotInfo(
         `Steam Message Received!`,
         `Message received from ${bot_name}!\n${response}`,
@@ -319,4 +337,25 @@ steam_client.on('friendMessage', function (steamID, response) {
     channel.send(embed);
 });
 
-logInEvents();
+
+// returns [BOT Object, the starting point of the command] or void
+// priority order index first then ID then NAME
+function matchBot(args) {
+    const allTheBots = getAllTheBots()
+
+    if (args[0] > 0 && parseInt(args[0]) <= allTheBots.length) return [allTheBots[args[0] - 1], 1];
+
+    if (!isNaN(args[0]) && config.BOTS[args[0]]) return [config.BOTS[args[0]], 1];
+
+    const names = allTheBots.map(bot => bot.name);
+    for (let i = 1; i <= args.length; i++) {
+        const match = names.find(name => name === args.slice(0, i).join(' '));
+        if (match) return [allTheBots.find(bot => bot.name === match), i];
+    }
+    return [null, -1]
+}
+
+function getAllTheBots() {
+    return Object.keys(config.BOTS).map(id => config.BOTS[id]);
+}
+logInEvents().catch(err => { throw err });
