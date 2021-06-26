@@ -1,2 +1,4 @@
 node_modules
-config
+config/*
+!config/template_config.json
+!config/example_config.json

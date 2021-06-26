@@ -1,0 +1,18 @@
+{
+    "STEAM_ACCOUNT_NAME": "<steam account name>",
+    "STEAM_PASSWORD": "<steam account password>",
+    "STEAM_SHARED_SECRET": "<steam account shared secret>",
+
+    "DISCORD_PREFIX": "<<enter the prefix you want to use, such as ? or ! or . >>",
+    "DISCORD_TOKEN": "<enter the token that will be used for the discord bot to log in>",
+    "DISCORD_BOT_COMMAND_CHANNEL": "<discord command channel>",
+    "DISCORD_BOT_OWNER_ID": "<discord owner id>",
+
+    "BOTS": {
+        "<BOT_STEAMID64>": {
+            "name": "<what you want to call your bot here // leave empty if you want the name to be same as the steam profile name>",
+            "picture": "<an url to an image // leave empty if you want it to be the same as the steam profile picture>",
+            "tradeOfferURL": "<an url to send a trade offer to your bot // can be left empty:)"
+        }
+    }
+}

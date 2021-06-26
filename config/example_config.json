@@ -1,0 +1,23 @@
+{
+    "STEAM_ACCOUNT_NAME": "derpCord",
+    "STEAM_PASSWORD": "ILoveTurtles69",
+    "STEAM_SHARED_SECRET": "ATI2iNrVZtxXGmRXjvfQxBe9OhD=",
+
+    "DISCORD_PREFIX": ".",
+    "DISCORD_TOKEN": "8rXWXXjEuYreCrAwXphq5fBhYCy.ZMe2Yg.NnJRb5Wi8iQAjcANeMXjLiWL",
+    "DISCORD_BOT_COMMAND_CHANNEL": "735765188191453255",
+    "DISCORD_BOT_OWNER_ID": "242688398475657216",
+
+    "BOTS": {
+        "76561198845896241": {
+            "name": "Derpatron",
+            "picture": "",
+            "tradeOfferURL": "https://steamcommunity.com/tradeoffer/new/?partner=885630513&token=RVIToycJ"
+        },
+        "76561199118546232": {
+            "name": "Herpatron",
+            "picture": "",
+            "tradeOfferURL": "https://steamcommunity.com/tradeoffer/new/?partner=1158280504&token=6V9o5iLN"
+        }
+    }
+}
